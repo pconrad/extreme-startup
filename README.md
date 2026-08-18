@@ -68,6 +68,80 @@ Connection order is:
 2. `flaskr/mongo_config.json`
 3. local fallback (`localhost:27017` then `mongo:27017`)
 
+### Fork maintenance playbook
+
+Use this if this repository stays as a long-lived fork and upstream PRs may or may not be accepted.
+
+#### 1) Configure upstream once
+
+```
+git remote add upstream https://github.com/<upstream-org-or-user>/<upstream-repo>.git
+git remote -v
+```
+
+#### 2) Keep local master in sync with upstream
+
+```
+git checkout master
+git fetch upstream
+git rebase upstream/master
+git push origin master
+```
+
+#### 3) Create and maintain a deployment branch in your fork
+
+```
+git checkout -b deploy/dokku
+git push -u origin deploy/dokku
+```
+
+When upstream changes land later, refresh deploy branch from updated master:
+
+```
+git checkout deploy/dokku
+git rebase master
+git push --force-with-lease origin deploy/dokku
+```
+
+#### 4) Promote tested work into deploy branch
+
+If a feature branch is ready:
+
+```
+git checkout deploy/dokku
+git merge --no-ff <feature-branch>
+git push origin deploy/dokku
+```
+
+If you only want selected commits:
+
+```
+git checkout deploy/dokku
+git cherry-pick <commit-sha>
+git push origin deploy/dokku
+```
+
+#### 5) Resolve conflicts safely during rebase
+
+```
+git status
+git add <resolved-files>
+git rebase --continue
+```
+
+If a rebase goes wrong:
+
+```
+git rebase --abort
+```
+
+#### 6) Recommended branch policy
+
+1. Keep master tracking upstream as closely as possible.
+2. Keep deploy/dokku as your production-ready branch.
+3. Keep feature branches short-lived and PR-focused.
+4. Merge to deploy/dokku only after local Docker and Dokku validation.
+
 ### Manual
 Run this if you don't want to install Docker
 
