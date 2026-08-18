@@ -75,7 +75,7 @@ Use this if this repository stays as a long-lived fork and upstream PRs may or m
 #### 1) Configure upstream once
 
 ```
-git remote add upstream https://github.com/<upstream-org-or-user>/<upstream-repo>.git
+git remote add upstream https://github.com/minutehour/extreme-startup.git
 git remote -v
 ```
 
