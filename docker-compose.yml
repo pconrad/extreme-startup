@@ -18,6 +18,8 @@ services:
       context: .
     image: extremestartup:local
     container_name: extremestartup-app
+    environment:
+      MONGO_URL: mongodb://mongo:27017
     depends_on:
       mongo:
         condition: service_healthy

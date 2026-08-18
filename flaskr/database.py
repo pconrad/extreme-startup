@@ -25,8 +25,8 @@ def _connect_local_candidates():
 
     raise RuntimeError(
         "Unable to connect to MongoDB at localhost:27017 or mongo:27017. "
-        "Start a MongoDB service/container, or provide flaskr/mongo_config.json "
-        "for an external MongoDB connection."
+        "Start a MongoDB service/container, set MONGO_URL, or provide "
+        "flaskr/mongo_config.json for an external MongoDB connection."
     ) from last_error
 
 def get_mongo_client(local=False):
@@ -35,6 +35,10 @@ def get_mongo_client(local=False):
     If not found, or if local=True, then boots a local server and connects to it.
     This local server will be completely fresh
     """
+
+    mongo_url = os.environ.get("MONGO_URL")
+    if mongo_url:
+        return _connect_with_ping(mongo_url)
 
     if "USE_LOCAL_MONGO_DB" in os.environ:
         destructive_start_localhost_mongo()

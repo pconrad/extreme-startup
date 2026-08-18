@@ -21,6 +21,8 @@ Stop everything with:
 docker compose down
 ```
 
+In this setup, the app is configured with `MONGO_URL=mongodb://mongo:27017`.
+
 Legacy manual flow:
 
 ```
@@ -36,6 +38,20 @@ When finished, clean up the MongoDB container with:
 ```
 docker rm -f mongo
 ```
+
+### Dokku
+
+If MongoDB is provisioned separately in Dokku, configure this app to use it via
+`MONGO_URL`:
+
+```
+dokku config:set <your-app-name> MONGO_URL=<your-mongodb-connection-url>
+```
+
+Connection order is:
+1. `MONGO_URL` environment variable
+2. `flaskr/mongo_config.json`
+3. local fallback (`localhost:27017` then `mongo:27017`)
 
 ### Manual
 Run this if you don't want to install Docker
