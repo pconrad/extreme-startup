@@ -11,9 +11,17 @@ Run this if you just want to run it locally. This will 99.99% work if you have
 
 ```
 docker build -t extremestartup .
-docker run -it -p80:80 -p27017:27017 extremestartup
+docker network create extremestartup-net
+docker run -d --name mongo --network extremestartup-net -p27017:27017 mongo:7
+docker run -it --rm --network extremestartup-net -p80:80 extremestartup
 ```
 The server should be live on localhost.
+
+When finished, clean up the MongoDB container with:
+
+```
+docker rm -f mongo
+```
 
 ### Manual
 Run this if you don't want to install Docker

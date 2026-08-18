@@ -1,5 +1,33 @@
-import pymongo, os, json, subprocess, shutil, os
+import json
+import os
+import shutil
+import subprocess
+
+import pymongo
 from pathlib import Path
+
+
+def _connect_with_ping(uri):
+    """Create a client and verify connectivity immediately."""
+    cli = pymongo.MongoClient(uri, serverSelectionTimeoutMS=3000)
+    cli.admin.command("ping")
+    return cli
+
+
+def _connect_local_candidates():
+    """Try the common local/container Mongo endpoints in order."""
+    last_error = None
+    for uri in ("mongodb://localhost:27017", "mongodb://mongo:27017"):
+        try:
+            return _connect_with_ping(uri)
+        except pymongo.errors.PyMongoError as err:
+            last_error = err
+
+    raise RuntimeError(
+        "Unable to connect to MongoDB at localhost:27017 or mongo:27017. "
+        "Start a MongoDB service/container, or provide flaskr/mongo_config.json "
+        "for an external MongoDB connection."
+    ) from last_error
 
 def get_mongo_client(local=False):
     """
@@ -10,19 +38,11 @@ def get_mongo_client(local=False):
 
     if "USE_LOCAL_MONGO_DB" in os.environ:
         destructive_start_localhost_mongo()
-        try:
-            cli = pymongo.MongoClient("mongodb://localhost:27017")
-        except pymongo.errors.ConnectionFailure:
-            cli = pymongo.MongoClient("mongodb://mongo:27017")
-        return cli
+        return _connect_local_candidates()
 
     if local:
         destructive_start_localhost_mongo()
-        try:
-            cli = pymongo.MongoClient("mongodb://localhost:27017")
-        except pymongo.errors.ConnectionFailure:
-            cli = pymongo.MongoClient("mongodb://mongo:27017")
-        return cli
+        return _connect_local_candidates()
 
     config_path = os.path.join(os.path.dirname(__file__), "mongo_config.json")
 
@@ -34,7 +54,7 @@ def get_mongo_client(local=False):
                 conn_str = (
                     f"mongodb+srv://{cfg['user']}:{cfg['password']}@{cfg['address']}"
                 )
-                return pymongo.MongoClient(conn_str)
+                return _connect_with_ping(conn_str)
             except KeyError:
                 print("Warning: malformed mongo_config.json. Using localhost DB.")
                 return get_mongo_client(local=True)
@@ -49,6 +69,10 @@ def destructive_start_localhost_mongo():
     Clean flaskr/_db.
     Starts a local mongod database using flaskr/db as the store.
     """
+    # Only try to start mongod when the binary is available in this container.
+    if shutil.which("mongod") is None:
+        return
+
     # Remove and remake flaskr/db
     Path("/data/db").mkdir(parents=True, exist_ok=True)
-    subprocess.Popen(["mongod"], stdout=subprocess.DEVNULL)
+    subprocess.Popen(["mongod"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
