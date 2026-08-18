@@ -9,6 +9,20 @@ If you are simply wanting to play Extreme (Re)Startup, go to https://extreme-sta
 Run this if you just want to run it locally. This will 99.99% work if you have
 [Docker installed](https://docs.docker.com/engine/install/)
 
+Recommended (one command):
+
+```
+docker compose up --build
+```
+
+Stop everything with:
+
+```
+docker compose down
+```
+
+Legacy manual flow:
+
 ```
 docker build -t extremestartup .
 docker network create extremestartup-net

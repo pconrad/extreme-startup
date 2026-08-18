@@ -1,0 +1,28 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: extremestartup-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+    image: extremestartup:local
+    container_name: extremestartup-app
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "80:80"
+
+volumes:
+  mongo_data:
