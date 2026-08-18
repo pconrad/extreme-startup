@@ -15,10 +15,25 @@ Recommended (one command):
 docker compose up --build
 ```
 
+Shortcut using Makefile:
+
+```
+make run
+```
+
 Stop everything with:
 
 ```
 docker compose down
+```
+
+Makefile shortcuts:
+
+```
+make stop
+make logs
+make ps
+make clean
 ```
 
 In this setup, the app is configured with `MONGO_URL=mongodb://mongo:27017`.
