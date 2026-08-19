@@ -34,11 +34,11 @@ When you click the `Create a Game` button, this dialog pops up:
 
 So, enter a password, and click `Create Game`. Then you'll see this:
 
-<img width="380" height="212" alt="image" src="https://github.com/user-attachments/assets/37967d14-6eee-40d5-af7a-e85ab75dde15" />
+<img width="405" height="202" alt="image" src="https://github.com/user-attachments/assets/359a6f52-34ab-4072-9170-05bc180cf301" />
 
 Now it starts to get interesting.  When you click `To Game Page`, you see this:
 
-<img width="711" height="542" alt="image" src="https://github.com/user-attachments/assets/9f669099-0757-4ffc-9303-47895f0718dd" />
+<img width="969" height="519" alt="image" src="https://github.com/user-attachments/assets/e53197ca-a2a8-4250-a0fe-c23a97a2870f" />
 
 Let's unpack all the parts of this page.
 
@@ -56,6 +56,127 @@ The third menu option, `Players`, shows this page, also initially empty:
 
 <img width="844" height="268" alt="image" src="https://github.com/user-attachments/assets/22b8041e-aea1-48eb-b935-e095e0ed18c3" />
 
-TODO: What does the `Withdraw All` button do?
+There's just one button here: `Withdraw All`.  We'll cover what that does later on.
+
+## Instructions for Players
+
+Once a game has been created, players can join the game by clicking the `Join Game` button.
+
+But before you can join, you need a server.  It needs to:
+
+* Listen for http web requests (preferably, any verb, any route, any parameters) at some address and port that the server can reach.
+* Print out information about those on stdout so that you can inspect it and decide what to do next in the game
+* Returns a blank response with status code 200 for everything (at least initially)
+
+This is the only way that a player can figure out what their next move in the game is supposed to be.
+
+Code for some "starter" servers appears below.
+
+TODO: If the server is running on localhost, then the game client can run on localhost as well.  But it would be better
+to setup a more realistic scenario for the final version of these instructions.
+
+Suppose you have a starter program, and you run it on http://0.0.0.0:12345.
+
+Then you can join the game like this:
+
+<img width="612" height="371" alt="image" src="https://github.com/user-attachments/assets/96628789-b41e-4a82-b676-a0a4ea3a3d05" />
+
+Hit enter, and the next thing you will see is something like this:
+
+<img width="978" height="787" alt="image" src="https://github.com/user-attachments/assets/309575da-c096-4e50-a801-78d6a5662bc5" />
+
+As you can see, your server is receiving events, and it is not responding the way the "customer" expects.
+
+Your next move is to adjust your server.   Without giving too much away, let's suppose you have adjusted your server to respond by sending back an HTTP response containing a name:
 
 
+
+## A simple Python starter program
+
+Here is a simple zero-dependency Python3 program that 
+
+* takes a port number as it's command line parameter,
+* listens for http requests on that port at any route, any verb, any parameters
+* for each route and verb, it logs the verb, route and parameters on stdout,
+* and then returns a blank response with status code 200.
+
+
+```python
+import sys
+import urllib.parse
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class RequestLoggerHandler(BaseHTTPRequestHandler):
+    def process_request(self):
+        # Extract HTTP verb and parse the URL path and query parameters
+        verb = self.command
+        parsed_url = urllib.parse.urlparse(self.path)
+        route = parsed_url.path
+        
+        # parse_qs converts the query string into a dict of key-list pairs
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+
+        # Log details to stdout
+        print("\n" + "=" * 40)
+        print(f"VERB:       {verb}")
+        print(f"ROUTE:      {route}")
+        print(f"PARAMETERS: {query_params}")
+
+        # If a body payload exists (e.g., POST/PUT JSON or form data), log it as well
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length > 0:
+            body = self.rfile.read(content_length).decode("utf-8", errors="replace")
+            print(f"BODY:       {body}")
+        print("=" * 40)
+
+        # Send an empty 200 OK response
+        self.send_response(200)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    # Catch-all mechanism for standard HTTP methods
+    do_GET = process_request
+    do_POST = process_request
+    do_PUT = process_request
+    do_DELETE = process_request
+    do_PATCH = process_request
+    do_HEAD = process_request
+    do_OPTIONS = process_request
+
+    # Catch-all mechanism for any non-standard HTTP methods
+    def __getattr__(self, name):
+        if name.startswith("do_"):
+            return self.process_request
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+    # Override standard logging to prevent noise on stderr
+    def log_message(self, format, *args):
+        pass
+
+
+def run():
+    if len(sys.argv) < 2:
+        print("Usage: python http_logger.py <port>")
+        sys.exit(1)
+
+    try:
+        port = int(sys.argv[1])
+    except ValueError:
+        print("Error: Port must be a valid integer.")
+        sys.exit(1)
+
+    server_address = ("0.0.0.0", port)
+    httpd = HTTPServer(server_address, RequestLoggerHandler)
+    
+    print(f"🚀 Server listening on http://0.0.0.0:{port} ... (Press Ctrl+C to stop)")
+    
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down server.")
+        httpd.server_close()
+
+
+if __name__ == "__main__":
+    run()
+```
