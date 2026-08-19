@@ -52,8 +52,10 @@ The menu icon, upper left, expands into this:
 
 <img width="848" height="621" alt="image" src="https://github.com/user-attachments/assets/0932b799-59a9-4240-9145-c32885c0a535" />
 
+The third menu option, `Players`, shows this page, also initially empty:
 
+<img width="844" height="268" alt="image" src="https://github.com/user-attachments/assets/22b8041e-aea1-48eb-b935-e095e0ed18c3" />
 
-
+TODO: What does the `Withdraw All` button do?
 
 
